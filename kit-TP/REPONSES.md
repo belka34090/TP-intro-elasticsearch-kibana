@@ -127,15 +127,21 @@ Le plugin qui consomme le plus de temps est la sortie **Elasticsearch** avec **3
 
 La DLQ, ou *Dead Letter Queue*, est activée dans le service Logstash final.
 
-Le document de test `OFF-99999` contient un champ supplémentaire `prime`. Le mapping strict de `offres` refuse ce champ : le document n'est donc pas présent dans l'index.
+Le document de test `OFF-99999` contient un champ supplémentaire `prime`. La vérification réelle confirme qu'il est **absent de l'index** et que `offres` reste à **5 000 documents**.
 
-Avec la DLQ activée, l'événement rejeté est conservé sous le répertoire Logstash :
+Elasticsearch renvoie un statut **HTTP 400** avec l'exception :
 
 ```text
-/usr/share/logstash/data/dead_letter_queue/
+strict_dynamic_mapping_exception
 ```
 
-La métadonnée de DLQ conserve la raison du rejet, notamment le refus du champ `prime` par le mapping `dynamic: strict`.
+et la raison :
+
+```text
+mapping set to strict, dynamic introduction of [prime] within [_doc] is not allowed
+```
+
+Logstash route bien cet événement vers la DLQ. Un fichier `dead_letter_queue/offres/1.log` de **2 164 octets** a été créé, ce qui confirme que le document rejeté a été conservé sur disque.
 
 Par rapport à `raise_on_error=False` dans `ingest.py`, la DLQ apporte une conservation durable du document rejeté et de son contexte, ce qui permet de l'analyser et de le rejouer plus tard.
 
@@ -229,7 +235,16 @@ C'est l'index caché qui contient physiquement les documents du data stream. Le 
 
 ## Exercice 3.5 — Rejouer sans doublon
 
-Comme `sincedb_path => "/dev/null"` force la relecture et qu'aucun `document_id` stable n'est défini pour les logs, un second passage ajoute à nouveau les 20 700 événements. Le compteur passe donc de 20 700 à environ 41 400 dans un data stream non nettoyé.
+Comme `sincedb_path => "/dev/null"` force la relecture et qu'aucun `document_id` stable n'est défini pour les logs, un second passage ajoute à nouveau les 20 700 événements.
+
+La vérification réelle donne :
+
+```text
+Avant redémarrage : 20700
+Après redémarrage : 41400
+```
+
+Le doublement est donc confirmé expérimentalement.
 
 Le problème ne se posait pas pour `offres`, car chaque offre utilisait son identifiant métier comme `_id`.
 
