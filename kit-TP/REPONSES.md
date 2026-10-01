@@ -629,7 +629,7 @@ Sur le jeu de données propre, le taux global de réponses 5xx est :
 (402 + 5) / 20 700 = 1,97 %
 ```
 
-Un clic sur une série `503` doit filtrer les autres panneaux du tableau de bord.
+L'interactivité a été vérifiée manuellement : un clic sur la série `503` applique le filtre `http.response.status_code: 503` et la plage du 28/09 de 12:00 à 15:00. Le dashboard se recalcule alors à **402 requêtes** avec un **taux 5xx de 100,00 %** ; le tableau des offres devient vide, la carte n'affiche plus de points et les navigateurs sont recalculés sur ce sous-ensemble.
 
 La capture finale doit être enregistrée sous :
 
