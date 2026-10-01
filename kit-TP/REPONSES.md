@@ -111,11 +111,17 @@ Sans `document_id`, Elasticsearch générerait un nouvel `_id` à chaque lecture
 - `offres` ;
 - `web`.
 
-Le test Logstash exécuté sur cette machine a montré 32 workers pour un pipeline par défaut. L'API `/_node/pipelines` permet de confirmer la valeur réellement utilisée par chacun des deux pipelines du service.
+La supervision réelle du service confirme **deux pipelines**, `offres` et `web`, avec **32 workers chacun**. Le statut global de Logstash est `green` et la DLQ est activée pour les deux pipelines.
 
-Pour `offres`, les compteurs `in`, `filtered` et `out` représentent respectivement les événements reçus, passés dans les filtres et transmis à la sortie depuis le dernier démarrage du pipeline. Après une lecture complète réussie du fichier principal, on attend 5 000 événements.
+Pour `offres`, les compteurs observés depuis le dernier démarrage sont :
 
-Le plugin ayant le plus grand `duration_in_millis` dépend de l'exécution réelle et doit être relevé dans `/_node/stats/pipelines/offres`. Cette valeur est volontairement vérifiée localement plutôt qu'inventée dans le rendu.
+- `in = 5000` ;
+- `filtered = 5000` ;
+- `out = 5000`.
+
+Ils représentent respectivement les événements reçus, passés dans les filtres et transmis à la sortie.
+
+Le plugin qui consomme le plus de temps est la sortie **Elasticsearch** avec **36 695 ms**, contre **3 623 ms** pour le filtre `mutate`. C'est cohérent : l'envoi réseau et l'indexation des documents coûtent davantage que la suppression de quelques champs.
 
 ## Exercice 2.2 — Dead Letter Queue
 
@@ -152,7 +158,7 @@ L'isolation apporte également :
 
 ## Exercice 2.4 — Ne rien perdre
 
-Avec la file en mémoire, un arrêt brutal peut perdre les événements déjà lus mais pas encore transmis.
+La supervision réelle indique `queue.type = "memory"`. Avec cette file en mémoire, un arrêt brutal peut perdre les événements déjà lus mais pas encore transmis.
 
 Le réglage `queue.type: persisted` utilise une file persistée sur disque. Après redémarrage, Logstash peut reprendre les événements non acquittés. La garantie devient « au moins une fois » : un événement peut être rejoué.
 
@@ -205,7 +211,7 @@ Le pipeline final :
 
 ## Exercice 3.4 — Vérifications
 
-Valeurs déterministes attendues après une ingestion propre :
+Valeurs déterministes vérifiées après une ingestion propre :
 
 - documents : **20 700** ;
 - échecs `_grokparsefailure` : **0** ;
@@ -213,7 +219,13 @@ Valeurs déterministes attendues après une ingestion propre :
 - `http.response.status_code` : type entier ;
 - `index.mode` : `logsdb`.
 
-Le backing index est l'index caché qui contient physiquement les documents du data stream. Son nom suit la forme `.ds-logs-web-default-<date>-000001` ; le nom exact est relevé par `GET _data_stream/logs-web-default`.
+Le backing index observé est :
+
+```text
+.ds-logs-web-default-2026.10.01-000001
+```
+
+C'est l'index caché qui contient physiquement les documents du data stream. Le data stream utilise bien le mode `logsdb` et la stratégie ILM `logs`.
 
 ## Exercice 3.5 — Rejouer sans doublon
 
