@@ -1,0 +1,17 @@
+POST _security/role/logstash_writer
+{
+  "cluster": ["monitor", "manage_index_templates"],
+  "indices": [
+    {
+      "names": ["offres", "logs-web-*"],
+      "privileges": ["write", "create", "create_index", "auto_configure"]
+    }
+  ]
+}
+
+POST _security/user/logstash_internal
+{
+  "password": "<LOGSTASH_INTERNAL_PASSWORD>",
+  "roles": ["logstash_writer"],
+  "full_name": "Logstash - ingestion"
+}
