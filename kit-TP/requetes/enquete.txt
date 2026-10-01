@@ -1,0 +1,144 @@
+# Requêtes utilisées pour l'enquête du TP2
+# Les blocs ES|QL sont à exécuter dans Discover en mode ES|QL.
+# Les blocs KQL sont à utiliser dans la barre de filtre de Discover.
+
+# ------------------------------------------------------------
+# Exercice 4.1 — Vue d'ensemble
+# ------------------------------------------------------------
+
+# ES|QL — répartition par code HTTP
+FROM logs-web-default
+| STATS requetes = COUNT(*) BY code = http.response.status_code
+| SORT code ASC
+
+# ES|QL — répartition par méthode HTTP
+FROM logs-web-default
+| STATS requetes = COUNT(*) BY methode = http.request.method
+| SORT requetes DESC
+
+# ES|QL — volume par jour
+FROM logs-web-default
+| STATS requetes = COUNT(*) BY jour = BUCKET(@timestamp, 1 day)
+| SORT jour ASC
+
+# KQL — exemples de filtres
+http.response.status_code >= 500
+http.request.method: "POST"
+
+# ------------------------------------------------------------
+# Exercice 4.2 — Incident applicatif
+# ------------------------------------------------------------
+
+# Localiser les erreurs serveur par heure
+FROM logs-web-default
+| WHERE http.response.status_code >= 500
+| STATS erreurs = COUNT(*) BY heure = BUCKET(@timestamp, 1 hour)
+| SORT erreurs DESC
+| LIMIT 10
+
+# Resserrement à 5 minutes
+FROM logs-web-default
+| WHERE http.response.status_code >= 500
+| STATS erreurs = COUNT(*) BY tranche = BUCKET(@timestamp, 5 minutes)
+| SORT erreurs DESC
+| LIMIT 20
+
+# URL touchées
+FROM logs-web-default
+| WHERE http.response.status_code >= 500
+| STATS erreurs = COUNT(*) BY url.original
+| SORT erreurs DESC
+
+# Activité de l'API pendant l'incident
+FROM logs-web-default
+| WHERE @timestamp >= TO_DATETIME("2026-09-28T12:00:00Z")
+  AND @timestamp < TO_DATETIME("2026-09-28T12:45:00Z")
+  AND url.original LIKE "/api/offres%"
+| STATS requetes = COUNT(*) BY code = http.response.status_code
+| SORT code ASC
+
+# KQL équivalent pour l'incident (14:00–14:45 heure France, soit 12:00–12:45 UTC)
+http.response.status_code >= 500 and @timestamp >= "2026-09-28T12:00:00Z" and @timestamp < "2026-09-28T12:45:00Z"
+
+# ------------------------------------------------------------
+# Exercice 4.3 — Activité suspecte
+# ------------------------------------------------------------
+
+# IP générant le plus de 404
+FROM logs-web-default
+| WHERE http.response.status_code == 404
+| STATS erreurs404 = COUNT(*) BY source.address
+| SORT erreurs404 DESC
+| LIMIT 20
+
+# Requêtes du robot
+FROM logs-web-default
+| WHERE source.address == "203.0.113.66"
+| KEEP @timestamp, source.address, url.original, user_agent.original, http.response.status_code
+| SORT @timestamp ASC
+
+# URL visées par le robot
+FROM logs-web-default
+| WHERE source.address == "203.0.113.66"
+| STATS requetes = COUNT(*) BY url.original
+| SORT requetes DESC
+
+# Autres 404
+FROM logs-web-default
+| WHERE http.response.status_code == 404 AND source.address != "203.0.113.66"
+| STATS erreurs404 = COUNT(*) BY url.original
+| SORT erreurs404 DESC
+| LIMIT 20
+
+# KQL
+http.response.status_code: 404 and source.address: "203.0.113.66"
+
+# ------------------------------------------------------------
+# Exercice 4.4 — Offres les plus consultées
+# ------------------------------------------------------------
+
+FROM logs-web-default
+| WHERE http.request.method == "GET"
+  AND http.response.status_code == 200
+  AND labels.offre_id IS NOT NULL
+| STATS consultations = COUNT(*) BY labels.offre_id
+| SORT consultations DESC, labels.offre_id ASC
+| LIMIT 10
+
+# Requête Elasticsearch Dev Tools : métadonnées des dix offres
+GET offres/_search
+{
+  "size": 10,
+  "_source": ["id", "titre", "ville", "contrat"],
+  "query": {
+    "ids": {
+      "values": [
+        "OFF-04662",
+        "OFF-01153",
+        "OFF-03141",
+        "OFF-00289",
+        "OFF-00901",
+        "OFF-01275",
+        "OFF-01660",
+        "OFF-02899",
+        "OFF-03126",
+        "OFF-03145"
+      ]
+    }
+  }
+}
+
+# ------------------------------------------------------------
+# Exercice 4.5 — Public
+# ------------------------------------------------------------
+
+# Répartition par système d'exploitation
+FROM logs-web-default
+| STATS requetes = COUNT(*) BY os = user_agent.os.name
+| SORT requetes DESC
+
+# Navigateurs
+FROM logs-web-default
+| STATS requetes = COUNT(*) BY navigateur = user_agent.name
+| SORT requetes DESC
+| LIMIT 10
