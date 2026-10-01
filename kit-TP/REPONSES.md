@@ -388,14 +388,15 @@ Après parsing par `useragent`, le classement exact des libellés `user_agent.na
 
 # Partie 5 — Tableau de bord
 
-Le tableau de bord demandé est **« Site de recrutement — trafic »** avec :
+Le tableau de bord **« Site de recrutement — trafic »** a été créé via l'API Kibana. La réponse HTTP **201** confirme sa création et l'API de lecture retourne bien les cinq panneaux automatisables :
 
 - indicateur du nombre total de requêtes ;
 - indicateur du taux de réponses 5xx ;
 - trafic dans le temps ventilé par code HTTP ;
 - Top 10 des `labels.offre_id` ;
-- anneau des navigateurs ;
-- carte des offres par `localisation` à partir de la data view `offres`.
+- anneau des navigateurs.
+
+La carte des offres par `localisation` doit être ajoutée avec Kibana Maps à partir de la data view `offres`.
 
 Sur le jeu de données propre, le taux global de réponses 5xx est :
 
