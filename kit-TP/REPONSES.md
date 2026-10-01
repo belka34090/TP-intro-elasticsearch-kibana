@@ -382,7 +382,15 @@ Répartition brute des User-Agents générés :
 - Firefox Linux : 4 037 ;
 - zgrab : 300.
 
-Après parsing par `useragent`, le classement exact des libellés `user_agent.name` est à confirmer dans Kibana, car le parseur peut distinguer par exemple `Safari` et `Mobile Safari`, ou `Chrome` et `Chrome Mobile`.
+Le dashboard Kibana confirme les libellés réellement produits par le filtre `useragent` :
+
+- Safari : **20,34 %** ;
+- Mobile Safari : **20,09 %** ;
+- Chrome : **19,89 %** ;
+- Chrome Mobile : **19,88 %** ;
+- Firefox : **19,79 %**.
+
+Le robot `zgrab` représente le reliquat très faible hors Top 5.
 
 ---
 
@@ -396,7 +404,7 @@ Le tableau de bord **« Site de recrutement — trafic »** a été créé via l
 - Top 10 des `labels.offre_id` ;
 - anneau des navigateurs.
 
-La carte des offres par `localisation` doit être ajoutée avec Kibana Maps à partir de la data view `offres`.
+La capture de contrôle montre que les cinq panneaux API sont correctement rendus avec **20 700 requêtes** et un **taux 5xx de 1,97 %**. La carte des offres par `localisation` doit encore être ajoutée avec Kibana Maps à partir de la data view `offres`.
 
 Sur le jeu de données propre, le taux global de réponses 5xx est :
 
