@@ -404,7 +404,7 @@ Le tableau de bord **« Site de recrutement — trafic »** a été créé via l
 - Top 10 des `labels.offre_id` ;
 - anneau des navigateurs.
 
-La capture de contrôle montre que les cinq panneaux API sont correctement rendus avec **20 700 requêtes** et un **taux 5xx de 1,97 %**. La carte des offres par `localisation` doit encore être ajoutée avec Kibana Maps à partir de la data view `offres`.
+La capture de contrôle montre que les cinq panneaux API sont correctement rendus avec **20 700 requêtes** et un **taux 5xx de 1,97 %**. La carte Kibana Maps utilisant la data view `offres` et le champ `localisation` a également été ajoutée : le dashboard final contient donc les **six panneaux demandés**.
 
 Sur le jeu de données propre, le taux global de réponses 5xx est :
 
