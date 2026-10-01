@@ -101,7 +101,7 @@ GET offres/_search
 {
   "size": 0,
   "query": {
-    "match": {
+    "match_phrase": {
       "titre": "Data Engineer"
     }
   },
