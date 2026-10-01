@@ -231,7 +231,14 @@ Le backing index observé est :
 .ds-logs-web-default-2026.10.01-000001
 ```
 
-C'est l'index caché qui contient physiquement les documents du data stream. Le data stream utilise bien le mode `logsdb` et la stratégie ILM `logs`.
+C'est l'index caché qui contient physiquement les documents du data stream. Son nom se lit ainsi :
+
+- `.ds` : préfixe des backing indices d'un data stream ;
+- `logs-web-default` : nom du data stream, composé de `type=logs`, `dataset=web` et `namespace=default` ;
+- `2026.10.01` : date de création de ce backing index, pas la date des événements ;
+- `000001` : première génération du data stream.
+
+Le data stream utilise bien le mode `logsdb` et la stratégie ILM `logs`.
 
 ## Exercice 3.5 — Rejouer sans doublon
 
@@ -248,7 +255,9 @@ Le doublement est donc confirmé expérimentalement.
 
 Le problème ne se posait pas pour `offres`, car chaque offre utilisait son identifiant métier comme `_id`.
 
-Un data stream est conçu pour des événements en ajout. Pour rendre le rejeu sûr, deux approches possibles sont :
+Un data stream est conçu pour des événements en ajout : une indexation normale dans son nom logique crée un nouvel événement plutôt que de remplacer un document existant. La modification d'un document existant n'est donc pas le fonctionnement normal du flux ; elle nécessite de cibler explicitement les données déjà stockées, notamment le backing index.
+
+Pour rendre le rejeu sûr, deux approches possibles sont :
 
 - conserver une `sincedb` normale afin de ne pas relire un fichier déjà consommé ;
 - calculer un identifiant déterministe avec le filtre `fingerprint` et l'utiliser comme identifiant du document afin de détecter les événements déjà vus.
