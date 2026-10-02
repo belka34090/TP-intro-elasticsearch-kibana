@@ -1,0 +1,122 @@
+# TP1 — Partie 4 : agrégations
+
+# Exercice 4.1 — Offres et salaire moyen par ville
+GET offres/_search
+{
+  "size": 0,
+  "aggs": {
+    "par_ville": {
+      "terms": {
+        "field": "ville",
+        "size": 12,
+        "order": {
+          "salaire_moyen": "desc"
+        }
+      },
+      "aggs": {
+        "salaire_moyen": {
+          "avg": {
+            "field": "salaire_min"
+          }
+        }
+      }
+    }
+  }
+}
+
+# Variante volontairement incorrecte : titre est un champ text
+GET offres/_search
+{
+  "size": 0,
+  "aggs": {
+    "par_titre": {
+      "terms": {
+        "field": "titre"
+      }
+    }
+  }
+}
+
+# Correction avec le sous-champ keyword
+GET offres/_search
+{
+  "size": 0,
+  "aggs": {
+    "par_titre": {
+      "terms": {
+        "field": "titre.brut",
+        "size": 50
+      }
+    }
+  }
+}
+
+# Exercice 4.2 — Publications par mois et par contrat
+GET offres/_search
+{
+  "size": 0,
+  "aggs": {
+    "par_mois": {
+      "date_histogram": {
+        "field": "date_publication",
+        "calendar_interval": "month"
+      },
+      "aggs": {
+        "par_contrat": {
+          "terms": {
+            "field": "contrat",
+            "size": 5
+          }
+        }
+      }
+    }
+  }
+}
+
+# Exercice 4.3 — Tranches de salaire et statistiques d'expérience
+GET offres/_search
+{
+  "size": 0,
+  "aggs": {
+    "tranches_salaire": {
+      "range": {
+        "field": "salaire_min",
+        "ranges": [
+          { "key": "< 40 k", "to": 40000 },
+          { "key": "40-55 k", "from": 40000, "to": 55000 },
+          { "key": ">= 55 k", "from": 55000 }
+        ]
+      }
+    },
+    "experience": {
+      "stats": {
+        "field": "experience_annees"
+      }
+    }
+  }
+}
+
+# Exercice 4.4 — Requête + agrégations
+GET offres/_search
+{
+  "size": 0,
+  "query": {
+    "match_phrase": {
+      "titre": "Data Engineer"
+    }
+  },
+  "aggs": {
+    "competences_top5": {
+      "terms": {
+        "field": "competences",
+        "size": 5
+      }
+    },
+    "teletravail": {
+      "terms": {
+        "field": "teletravail",
+        "size": 3
+      }
+    }
+  }
+}
